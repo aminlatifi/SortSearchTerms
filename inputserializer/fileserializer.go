@@ -41,6 +41,7 @@ func (f *FileSerializer) GetSeralizerCh(ctx context.Context) (<-chan string, err
 	ch := make(chan string)
 
 	go func() {
+		defer close(ch)
 		err := filepath.Walk(f.path, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("Error in reading %s: %v\n", path, err)
@@ -75,7 +76,6 @@ func (f *FileSerializer) GetSeralizerCh(ctx context.Context) (<-chan string, err
 		if err != nil {
 			fmt.Println(err)
 		}
-		close(ch)
 	}()
 
 	return ch, nil

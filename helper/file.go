@@ -1,4 +1,4 @@
-package util
+package helper
 
 import (
 	"bufio"
@@ -12,7 +12,12 @@ func WriteSliceToFile(path string, source []string) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		closeErr := file.Close()
+		if err != nil {
+			err = closeErr
+		}
+	}()
 
 	writer := bufio.NewWriter(file)
 	for _, s := range source {
@@ -23,9 +28,6 @@ func WriteSliceToFile(path string, source []string) error {
 	}
 
 	err = writer.Flush()
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }

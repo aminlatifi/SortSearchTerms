@@ -6,8 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// IsWritable checks whether path is a writable directory
-func IsWritable(path string) (isWritable bool, err error) {
+// IsWritableDir checks whether path is a writable directory
+func IsWritableDir(path string) (isWritable bool, err error) {
 	isWritable = false
 	info, err := os.Stat(path)
 	if err != nil {

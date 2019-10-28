@@ -37,7 +37,7 @@ func TestSampleInput(t *testing.T) {
 		}
 	}
 
-	file, err := os.OpenFile(expectedPath, os.O_RDONLY, 0666)
+	file, err := os.Open(expectedPath)
 	if err != nil {
 		t.Error(err)
 		return

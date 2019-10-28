@@ -61,7 +61,7 @@ func (f *DirSerializer) GetSerializerCh(ctx context.Context) (<-chan string, err
 				return nil // Don't stop processing next files
 			}
 
-			file, err := os.OpenFile(path, os.O_RDONLY, 0666)
+			file, err := os.Open(path)
 			if err != nil {
 				log.Warningf("Error in opening %s: %v\n", path, err)
 				return nil // Don't stop processing next files
@@ -71,7 +71,7 @@ func (f *DirSerializer) GetSerializerCh(ctx context.Context) (<-chan string, err
 				log.Error(err)
 			}()
 
-			log.Infof("Serialize content of: %s", path)
+			log.Debugf("Serialize content of: %s", path)
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -80,7 +80,6 @@ func (f *DirSerializer) GetSerializerCh(ctx context.Context) (<-chan string, err
 					return io.EOF // Return error (EOF) to stop filepath walk from processing next files
 
 				case ch <- scanner.Text():
-
 				}
 			}
 

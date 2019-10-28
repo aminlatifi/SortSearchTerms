@@ -10,27 +10,22 @@ import (
 func TestIsWritableReadOnly(t *testing.T) {
 	dirPath := "./testData/testWritableReadOnly"
 
-	if _, err := os.Stat(dirPath); !os.IsNotExist(err) {
-		err := os.RemoveAll(dirPath)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+	err := CleanDir(dirPath)
+	if err != nil {
+		t.Error(err)
+		return
 	}
 
-	err := os.Mkdir(dirPath, 0555)
+	err = os.Mkdir(dirPath, 0555)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	defer func() {
-		err = os.RemoveAll(dirPath)
-		if err != nil {
-			t.Error(err)
-		}
+		err = CleanDir(dirPath)
 	}()
 
-	isWritable, err := IsWritable(dirPath)
+	isWritable, err := IsWritableDir(dirPath)
 
 	if err != nil {
 		t.Error(err)
@@ -46,27 +41,19 @@ func TestIsWritableReadOnly(t *testing.T) {
 func TestIsWritable(t *testing.T) {
 	dirPath := "./testData/testWritable"
 
-	if _, err := os.Stat(dirPath); !os.IsNotExist(err) {
-		err := os.RemoveAll(dirPath)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-	}
-
-	err := os.Mkdir(dirPath, 0777)
+	err := MakeCleanDir(dirPath)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	defer func() {
-		err = os.RemoveAll(dirPath)
+		err = CleanDir(dirPath)
 		if err != nil {
 			t.Error(err)
 		}
 	}()
 
-	isWritable, err := IsWritable(dirPath)
+	isWritable, err := IsWritableDir(dirPath)
 
 	if err != nil {
 		t.Error(err)

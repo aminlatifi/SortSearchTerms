@@ -61,6 +61,7 @@ func (ts *TempStorage) GetNextStoreCh(ctx context.Context, wg *sync.WaitGroup) (
 
 			case <-ctx.Done():
 				log.Warningf("%s write process is stopped before it finish", filePath)
+				return
 			}
 		}
 

@@ -133,7 +133,11 @@ func main() {
 
 		go func(ch chan<- string, bundle []string) {
 			for _, v := range bundle {
-				ch <- v
+				select {
+				case <-ctx.Done():
+					return
+				case ch <- v:
+				}
 			}
 			close(ch)
 		}(ch, bundle)

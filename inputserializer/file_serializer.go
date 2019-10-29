@@ -61,6 +61,7 @@ func (f *DirSerializer) GetSerializerCh(ctx context.Context) (<-chan string, err
 				return nil // Don't stop processing next files
 			}
 
+			// TODO: migrate to bufio
 			file, err := os.Open(path)
 			if err != nil {
 				log.Warningf("Error in opening %s: %v\n", path, err)

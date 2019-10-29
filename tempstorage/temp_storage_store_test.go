@@ -1,14 +1,13 @@
 package tempstorage
 
 import (
-	"AID/solution/helper"
 	"context"
 	"testing"
 	"time"
 )
 
 func TestTempStorage_GetNextStoreCh(t *testing.T) {
-	st, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData")
 	if err != nil {
 		t.Error(err)
 		return
@@ -17,20 +16,13 @@ func TestTempStorage_GetNextStoreCh(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer func() {
 		cancel()
-
-		if st.readLevel >= 0 {
-			err = helper.CleanDir(st.readDirPath)
-			if err != nil {
-				t.Logf("error in cleaning tempdir: %v", err)
-			}
-		}
-		err = helper.CleanDir(st.storeDirPath)
+		err = ts.Clean()
 		if err != nil {
-			t.Logf("error in cleaning tempdir: %v", err)
+			t.Error(err)
 		}
 	}()
 
-	ch, err := st.GetNextStoreCh(ctx)
+	ch, err := ts.GetNextStoreCh(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -49,13 +41,13 @@ func TestTempStorage_GetNextStoreCh(t *testing.T) {
 	}
 	close(ch)
 
-	err = st.SetupNextLevel()
+	err = ts.SetupNextLevel()
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	chs, err := st.GetNextReadChs(ctx, k)
+	chs, err := ts.GetNextReadChs(ctx, k)
 	if err != nil {
 		t.Error(err)
 		return

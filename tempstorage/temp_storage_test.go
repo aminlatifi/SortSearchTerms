@@ -8,24 +8,30 @@ import (
 )
 
 func TestGetTempLevelPath(t *testing.T) {
-	st, err := NewTempStorage("./testData")
+	ts, err := NewTempStorage("./testData")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	_, err = st.getTempLevelPath(-1)
+	defer func() {
+		err = ts.Clean()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+	_, err = ts.getTempLevelPath(-1)
 	if err == nil {
 		t.Error("getTempLevelPath does not return error on negative input")
 		return
 	}
 
-	_, err = st.getTempLevelPath(-13232)
+	_, err = ts.getTempLevelPath(-13232)
 	if err == nil {
 		t.Error("getTempLevelPath does not return error on negative input")
 		return
 	}
 
-	tempPath, err := st.getTempLevelPath(0)
+	tempPath, err := ts.getTempLevelPath(0)
 	if err != nil {
 		t.Errorf("getTempLevelPath returnx error on valid input: %v", err)
 		return
@@ -36,7 +42,7 @@ func TestGetTempLevelPath(t *testing.T) {
 		t.Errorf("getTempLevelPath returns %s, expected %s", tempPath, expectedPath)
 	}
 
-	tempPath, err = st.getTempLevelPath(322)
+	tempPath, err = ts.getTempLevelPath(322)
 	if err != nil {
 		t.Errorf("getTempLevelPath returnx error on valid input: %v", err)
 		return
@@ -71,18 +77,25 @@ func TestNewTempStorage(t *testing.T) {
 	}
 
 	tempPath = "testData"
-	st, err := NewTempStorage(tempPath)
+	ts, err := NewTempStorage(tempPath)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if st.storeLevel != 0 {
-		t.Errorf("initial value of storeLevel should be 0, but is %d", st.storeLevel)
+	defer func() {
+		err = ts.Clean()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
+
+	if ts.storeLevel != 0 {
+		t.Errorf("initial value of storeLevel should be 0, but is %d", ts.storeLevel)
 		return
 	}
 
-	if st.readLevel != -1 {
-		t.Errorf("initial value of readLevel should be -1, but is %d", st.readLevel)
+	if ts.readLevel != -1 {
+		t.Errorf("initial value of readLevel should be -1, but is %d", ts.readLevel)
 		return
 	}
 
@@ -96,13 +109,19 @@ func TestNewTempStorage(t *testing.T) {
 	}
 }
 func TestTempStorage_SetupNextLevel(t *testing.T) {
-	st, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData")
 	if err != nil {
 		t.Error(err)
 		return
 	}
+	defer func() {
+		err = ts.Clean()
+		if err != nil {
+			t.Error(err)
+		}
+	}()
 
-	err = st.SetupNextLevel()
+	err = ts.SetupNextLevel()
 	if err != nil {
 		t.Error(err)
 		return
@@ -131,7 +150,7 @@ func TestTempStorage_SetupNextLevel(t *testing.T) {
 	}
 
 	// Go one step further
-	err = st.SetupNextLevel()
+	err = ts.SetupNextLevel()
 	if err != nil {
 		t.Error(err)
 		return

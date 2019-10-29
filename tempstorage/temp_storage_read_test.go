@@ -1,7 +1,6 @@
 package tempstorage
 
 import (
-	"AID/solution/helper"
 	"context"
 	"io/ioutil"
 	"os"
@@ -13,14 +12,9 @@ import (
 
 func TestTempStorage_GetNextReadChs(t *testing.T) {
 
-	st, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData")
 	if err != nil {
 		t.Error(err)
-		return
-	}
-
-	if st.HasFilesToRead() {
-		t.Error("TempStorage should not have files to read initially")
 		return
 	}
 
@@ -30,7 +24,7 @@ func TestTempStorage_GetNextReadChs(t *testing.T) {
 	// Write to file manually
 	bytes := []byte("Hello\n")
 	for i := 0; i < numberOfFiles; i++ {
-		filePath := path.Join(st.storeDirPath, strconv.Itoa(i))
+		filePath := path.Join(ts.storeDirPath, strconv.Itoa(i))
 		err = ioutil.WriteFile(filePath, bytes, os.ModePerm)
 		if err != nil {
 			t.Error(err)
@@ -38,33 +32,22 @@ func TestTempStorage_GetNextReadChs(t *testing.T) {
 		}
 	}
 
-	err = st.SetupNextLevel()
+	err = ts.SetupNextLevel()
 	if err != nil {
 		t.Error(err)
-		return
-	}
-	if !st.HasFilesToRead() {
-		t.Error("TempStorage should have files to read")
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer func() {
 		cancel()
-
-		if st.readLevel >= 0 {
-			err = helper.CleanDir(st.readDirPath)
-			if err != nil {
-				t.Logf("error in cleaning tempdir: %v", err)
-			}
-		}
-		err = helper.CleanDir(st.storeDirPath)
+		err = ts.Clean()
 		if err != nil {
-			t.Logf("error in cleaning tempdir: %v", err)
+			t.Error(err)
 		}
 	}()
 
-	chs, err := st.GetNextReadChs(ctx, k)
+	chs, err := ts.GetNextReadChs(ctx, k)
 	if err != nil {
 		t.Error(err)
 		return
@@ -102,7 +85,7 @@ func TestTempStorage_GetNextReadChs(t *testing.T) {
 }
 
 func TestTempStorage_GetNextReadChs2(t *testing.T) {
-	st, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData")
 	if err != nil {
 		t.Error(err)
 		return
@@ -111,16 +94,9 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer func() {
 		cancel()
-
-		if st.readLevel >= 0 {
-			err = helper.CleanDir(st.readDirPath)
-			if err != nil {
-				t.Logf("error in cleaning tempdir: %v", err)
-			}
-		}
-		err = helper.CleanDir(st.storeDirPath)
+		err = ts.Clean()
 		if err != nil {
-			t.Logf("error in cleaning tempdir: %v", err)
+			t.Error(err)
 		}
 	}()
 
@@ -129,7 +105,7 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 
 	var ch chan<- string
 	for i := 0; i < numberOfFiles; i++ {
-		ch, err = st.GetNextStoreCh(ctx)
+		ch, err = ts.GetNextStoreCh(ctx)
 		if err != nil {
 			t.Error(err)
 			return
@@ -140,7 +116,7 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 		close(ch)
 	}
 
-	err = st.SetupNextLevel()
+	err = ts.SetupNextLevel()
 	if err != nil {
 		t.Error(err)
 		return
@@ -149,7 +125,7 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 	remainingFiles := numberOfFiles
 	var chs []<-chan string
 	for remainingFiles > 0 {
-		chs, err = st.GetNextReadChs(ctx, k)
+		chs, err = ts.GetNextReadChs(ctx, k)
 		if err != nil {
 			t.Error(err)
 			return
@@ -174,7 +150,7 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 		ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	}
 
-	chs, err = st.GetNextReadChs(ctx, k)
+	chs, err = ts.GetNextReadChs(ctx, k)
 	if err != nil {
 		t.Error(err)
 		return

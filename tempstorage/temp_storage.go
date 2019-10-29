@@ -127,3 +127,32 @@ func (ts *TempStorage) SetupNextLevel() error {
 
 	return nil
 }
+
+// HasSingleStoredFile check whether one and jus one file is stored at
+// store directory
+// result would be true if there is just one in store directory
+// storedFilePath is the path of the single stored file
+func (ts *TempStorage) HasSingleStoredFile() (result bool, storedFilePath string) {
+	if ts.storeFileCounter == 1 {
+		result = true
+		// By convention name are number starting from zero
+		storedFilePath = path.Join(ts.storeDirPath, "0")
+	}
+	return
+}
+
+// Clean store and read directories
+func (ts *TempStorage) Clean() error {
+	if ts.readLevel >= 0 {
+		err := helper.CleanDir(ts.readDirPath)
+		if err != nil {
+			return err
+		}
+	}
+	err := helper.CleanDir(ts.storeDirPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

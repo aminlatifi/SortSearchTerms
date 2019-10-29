@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
@@ -104,8 +105,10 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 	k := 3
 
 	var ch chan<- string
+	var wg sync.WaitGroup
+	wg.Add(numberOfFiles)
 	for i := 0; i < numberOfFiles; i++ {
-		ch, err = ts.GetNextStoreCh(ctx)
+		ch, err = ts.GetNextStoreCh(ctx, &wg)
 		if err != nil {
 			t.Error(err)
 			return
@@ -115,6 +118,8 @@ func TestTempStorage_GetNextReadChs2(t *testing.T) {
 
 		close(ch)
 	}
+
+	wg.Wait()
 
 	err = ts.SetupNextLevel()
 	if err != nil {

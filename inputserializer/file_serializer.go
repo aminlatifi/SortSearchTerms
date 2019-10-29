@@ -1,14 +1,14 @@
 package inputserializer
 
 import (
+	"AID/solution/helper"
 	"bufio"
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"path/filepath"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // DirSerializer implements serializing input file(s) under directory
@@ -61,26 +61,36 @@ func (f *DirSerializer) GetSerializerCh(ctx context.Context) (<-chan string, err
 				return nil // Don't stop processing next files
 			}
 
-			// TODO: migrate to bufio
 			file, err := os.Open(path)
 			if err != nil {
-				log.Warningf("Error in opening %s: %v\n", path, err)
+				log.Warningf("Error in opening %s: %v", path, err)
 				return nil // Don't stop processing next files
 			}
 			defer func() {
 				err = file.Close()
-				log.Error(err)
+				if err != nil {
+					log.Errorf("error in closding fil %s: %v", path, err)
+				}
 			}()
 
 			log.Debugf("Serialize content of: %s", path)
 
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
+			reader := bufio.NewReader(file)
+			var line string
+
+			for {
+				line, err = helper.GetNextLine(reader)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					log.Errorf("error in reading file %s: %v", path, err)
+				}
 				select {
 				case <-ctx.Done():
 					return io.EOF // Return error (EOF) to stop filepath walk from processing next files
 
-				case ch <- scanner.Text():
+				case ch <- line:
 				}
 			}
 

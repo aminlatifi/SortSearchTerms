@@ -23,7 +23,6 @@ func (b *bundler) AddTransformFunc(f TransformFunc) {
 }
 
 func (b *bundler) GetBundlerCh(ctx context.Context, inCh <-chan string) <-chan []string {
-	// TODO: implements
 	ch := make(chan []string)
 
 	go func() {

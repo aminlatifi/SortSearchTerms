@@ -2,6 +2,7 @@ package tempstorage
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 )
@@ -22,7 +23,9 @@ func TestTempStorage_GetNextStoreCh(t *testing.T) {
 		}
 	}()
 
-	ch, err := ts.GetNextStoreCh(ctx)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	ch, err := ts.GetNextStoreCh(ctx, &wg)
 	if err != nil {
 		t.Error(err)
 		return
@@ -40,6 +43,8 @@ func TestTempStorage_GetNextStoreCh(t *testing.T) {
 		}
 	}
 	close(ch)
+
+	wg.Wait()
 
 	err = ts.SetupNextLevel()
 	if err != nil {

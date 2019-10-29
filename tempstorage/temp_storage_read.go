@@ -1,6 +1,7 @@
 package tempstorage
 
 import (
+	"AID/solution/helper"
 	"bufio"
 	"context"
 	"fmt"
@@ -52,18 +53,24 @@ func fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-c
 		log.Debugf("Serialize content of %s", filePath)
 
 		// TODO: migrate to bufio
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			s := scanner.Text()
-			log.Debugf("read from file %s: %s", filePath, s)
+		reader := bufio.NewReader(file)
+		var line string
+		for {
+			line, err = helper.GetNextLine(reader)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.Errorf("error in reading file %s: %v", filePath, err)
+			}
 			select {
 			case <-ctx.Done():
 				log.Warningf("%s reading process is stopped before it finish", filePath)
 				return
-			case ch <- s:
+
+			case ch <- line:
 			}
 		}
-
 	}()
 
 	return ch, nil

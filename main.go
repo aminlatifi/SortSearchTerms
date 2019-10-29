@@ -2,14 +2,18 @@ package main
 
 import (
 	"AID/solution/bundler"
+	"AID/solution/merger"
 	"AID/solution/tempstorage"
 	"context"
 	"flag"
 	"io"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"runtime"
 	"sync"
+	"syscall"
+	"time"
 
 	"AID/solution/inputserializer"
 	log "github.com/sirupsen/logrus"
@@ -23,6 +27,7 @@ var (
 	isLogVerbose    = flag.Bool("v", false, "verbose mode")
 	processorNumber = flag.Int("p", runtime.NumCPU(), "number of processor to use")
 	k               = flag.Int("k", 4, "available memory")
+	n               = flag.Int("n", 5000, "limit number of open files")
 )
 
 func init() {
@@ -52,16 +57,33 @@ func init() {
 }
 
 func main() {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		log.Infof("Finished after %s", elapsed)
+	}()
 	if *k < 2 {
-		log.Fatalf("k cannot be less than 2")
+		log.Fatal("k cannot be less than 2")
 		return
 	}
 
+	if *n < 2 {
+		log.Fatal("n cannot be less than 2")
+		return
+	}
 	var inputSerializer inputserializer.InputSerializer
 
 	// Stop whole sub processes in case of exit
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// handle SIGINT and SIGTERM signals
+	go func() {
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+		<-signals
+		cancel()
+	}()
 
 	log.Infof("Read input from directory: %s", *inputPath)
 	// Use File Serializer to read directory files' content
@@ -75,7 +97,7 @@ func main() {
 	if *tempPath == "" {
 		*tempPath, err = ioutil.TempDir("", "dir")
 		if err != nil {
-			log.Fatalf("error in creating temporary directory: %v", err)
+			log.Fatal("error in creating temporary directory:", err)
 			return
 		}
 	}
@@ -85,11 +107,18 @@ func main() {
 
 	bundlerCh := b.GetBundlerCh(ctx, readCh)
 
-	ts, err := tempstorage.NewTempStorage(*tempPath)
+	chanBufSize := *k / *n
+	ts, err := tempstorage.NewTempStorage(*tempPath, chanBufSize)
 	if err != nil {
-		log.Fatalf("error in creating temporary storage: %v", err)
+		log.Fatal("error in creating temporary storage", err)
 		return
 	}
+	defer func() {
+		err = ts.Clean()
+		if err != nil {
+			log.Fatal("error in cleaning TempStorage:", err)
+		}
+	}()
 
 	var wg sync.WaitGroup
 	var ch chan<- string
@@ -112,4 +141,15 @@ func main() {
 
 	wg.Wait()
 
+	var numberOfFileToMerge int
+	if *k < *n {
+		numberOfFileToMerge = *k
+	} else {
+		numberOfFileToMerge = *n
+	}
+	err = merger.StartMerge(ctx, ts, *outputPath, numberOfFileToMerge)
+	if err != nil {
+		log.Fatal("error in merge:", err)
+		return
+	}
 }

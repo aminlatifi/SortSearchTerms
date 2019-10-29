@@ -14,7 +14,7 @@ import (
 
 // Read file lines and put in ch one by one
 // Cleans remove files at end to save storage
-func fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-chan string, error) {
+func (ts *TempStorage) fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-chan string, error) {
 	if info.IsDir() {
 		// Their contents will be processed
 		err := fmt.Errorf("no directory should be inside read directory of temporary storage: %s", info.Name())
@@ -33,7 +33,12 @@ func fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-c
 		return nil, err
 	}
 
-	ch := make(chan string)
+	var ch chan string
+	if ts.chanBuffSize > 1 {
+		ch = make(chan string, ts.chanBuffSize)
+	} else {
+		ch = make(chan string)
+	}
 
 	go func() {
 		defer close(ch)
@@ -52,7 +57,6 @@ func fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-c
 
 		log.Debugf("Serialize content of %s", filePath)
 
-		// TODO: migrate to bufio
 		reader := bufio.NewReader(file)
 		var line string
 		for {
@@ -79,11 +83,11 @@ func fileConsumer(ctx context.Context, parentPath string, info os.FileInfo) (<-c
 // GetNextReadChs return read channels for the next up to k available
 // files from read level directory
 // ctx is context
-// k is the number of files to read
+// n is the number of files to read
 // chs is slice of string channels, each element of slice is a channel that will
 // have strings which are lines of a file in read directory
-func (ts *TempStorage) GetNextReadChs(ctx context.Context, k int) (chs []<-chan string, err error) {
-	infos, err := ts.readDirFile.Readdir(k)
+func (ts *TempStorage) GetNextReadChs(ctx context.Context, n int) (chs []<-chan string, err error) {
+	infos, err := ts.readDirFile.Readdir(n)
 	// Reached the end
 	if err == io.EOF {
 		return nil, nil
@@ -96,7 +100,7 @@ func (ts *TempStorage) GetNextReadChs(ctx context.Context, k int) (chs []<-chan 
 	chs = make([]<-chan string, 0, len(infos))
 
 	for _, info := range infos {
-		ch, fcErr := fileConsumer(ctx, ts.readDirPath, info)
+		ch, fcErr := ts.fileConsumer(ctx, ts.readDirPath, info)
 		if fcErr != nil {
 			return nil, fcErr
 		}

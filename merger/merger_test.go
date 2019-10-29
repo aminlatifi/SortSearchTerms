@@ -15,7 +15,7 @@ import (
 func TestStartMerge(t *testing.T) {
 	ctx, _ := context.WithCancel(context.Background())
 
-	ts, err := tempstorage.NewTempStorage("testData")
+	ts, err := tempstorage.NewTempStorage("testData", 5)
 	if err != nil {
 		t.Error(err)
 		return

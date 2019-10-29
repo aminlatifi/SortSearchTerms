@@ -8,7 +8,7 @@ import (
 )
 
 func TestTempStorage_GetNextStoreCh(t *testing.T) {
-	ts, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData", 5)
 	if err != nil {
 		t.Error(err)
 		return

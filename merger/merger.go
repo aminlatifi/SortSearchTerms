@@ -9,7 +9,7 @@ import (
 )
 
 // StartMerge run merge process
-func StartMerge(ctx context.Context, ts *tempstorage.TempStorage, outputPath string, k int) error {
+func StartMerge(ctx context.Context, ts *tempstorage.TempStorage, outputPath string, numberOfFileToMerge int) error {
 
 	for {
 		if hasSingle, resultPath := ts.HasSingleStoredFile(); hasSingle {
@@ -32,7 +32,7 @@ func StartMerge(ctx context.Context, ts *tempstorage.TempStorage, outputPath str
 		for {
 			// read channels
 			var rChs []<-chan string
-			rChs, err = ts.GetNextReadChs(ctx, k)
+			rChs, err = ts.GetNextReadChs(ctx, numberOfFileToMerge)
 			if err != nil {
 				log.Errorf("error on getting next read channels of TempStorage: %v", err)
 				return err

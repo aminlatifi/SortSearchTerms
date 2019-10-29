@@ -25,7 +25,12 @@ func (ts *TempStorage) GetNextStoreCh(ctx context.Context, wg *sync.WaitGroup) (
 		return nil, err
 	}
 
-	ch := make(chan string)
+	var ch chan string
+	if ts.chanBuffSize > 1 {
+		ch = make(chan string, ts.chanBuffSize)
+	} else {
+		ch = make(chan string)
+	}
 
 	go func(ch <-chan string, file *os.File) {
 		defer wg.Done()

@@ -18,10 +18,11 @@ type TempStorage struct {
 	readDirPath, storeDirPath string   // keep read and store paths to generate once and use multiple times
 	readDirFile               *os.File // read directory os.File to go through files in read directory
 	storeFileCounter          int      // number of files has been created in store directory, used to create next ones
+	chanBuffSize              int      // size of buffered channels will be produced by TempStorage
 }
 
 // NewTempStorage creates new TempStorage module
-func NewTempStorage(path string) (*TempStorage, error) {
+func NewTempStorage(path string, chanBuffSize int) (*TempStorage, error) {
 	file, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -44,6 +45,7 @@ func NewTempStorage(path string) (*TempStorage, error) {
 		readLevel:        -1,
 		storeLevel:       0,
 		storeFileCounter: 0,
+		chanBuffSize:     chanBuffSize,
 	}
 	// Create zero level (initial input) store directory
 	levelPath, err := ts.getTempLevelPath(ts.storeLevel)

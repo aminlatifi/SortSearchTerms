@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetTempLevelPath(t *testing.T) {
-	ts, err := NewTempStorage("./testData")
+	ts, err := NewTempStorage("./testData", 5)
 	if err != nil {
 		t.Error(err)
 		return
@@ -56,28 +56,28 @@ func TestGetTempLevelPath(t *testing.T) {
 
 func TestNewTempStorage(t *testing.T) {
 	// Test with invalid path
-	_, err := NewTempStorage("")
+	_, err := NewTempStorage("", 1)
 	if err == nil {
 		t.Error("NewTempStorage should return error on empty path")
 		return
 	}
 
 	tempPath := "notExistsDir"
-	_, err = NewTempStorage(tempPath)
+	_, err = NewTempStorage(tempPath, 1)
 	if err == nil {
 		t.Errorf("NewTempStorage should return error on invalid path %s", tempPath)
 		return
 	}
 
 	tempPath = "asd sdfsd32 2"
-	_, err = NewTempStorage(tempPath)
+	_, err = NewTempStorage(tempPath, 1)
 	if err == nil {
 		t.Errorf("NewTempStorage should return error on invalid path %s", tempPath)
 		return
 	}
 
 	tempPath = "testData"
-	ts, err := NewTempStorage(tempPath)
+	ts, err := NewTempStorage(tempPath, 1)
 	if err != nil {
 		t.Error(err)
 		return
@@ -109,7 +109,7 @@ func TestNewTempStorage(t *testing.T) {
 	}
 }
 func TestTempStorage_SetupNextLevel(t *testing.T) {
-	ts, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData", 5)
 	if err != nil {
 		t.Error(err)
 		return

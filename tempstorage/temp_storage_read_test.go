@@ -13,7 +13,7 @@ import (
 
 func TestTempStorage_GetNextReadChs(t *testing.T) {
 
-	ts, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData", 5)
 	if err != nil {
 		t.Error(err)
 		return
@@ -86,7 +86,7 @@ func TestTempStorage_GetNextReadChs(t *testing.T) {
 }
 
 func TestTempStorage_GetNextReadChs2(t *testing.T) {
-	ts, err := NewTempStorage("testData")
+	ts, err := NewTempStorage("testData", 5)
 	if err != nil {
 		t.Error(err)
 		return
